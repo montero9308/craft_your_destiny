@@ -8,6 +8,33 @@ from cyd_engine.render.shapes import MeshFactory
 from cyd_engine.ui.dialogs import UIWindowManager
 from cyd_engine.world.models import WorldData
 
+@dataclass(slots=True)
+class FPSCounter:
+    """Contador de FPS manual para pyglet."""
+    
+    _frame_times: list[float] = field(default_factory=list, init=False)
+    _last_time: float = field(default=0.0, init=False)
+    _max_samples: int = field(default=30, init=False)
+    
+    def __post_init__(self) -> None:
+        self._last_time = perf_counter()
+    
+    def update(self) -> None:
+        """Actualizar el contador con el tiempo del frame actual."""
+        current_time = perf_counter()
+        dt = current_time - self._last_time
+        self._last_time = current_time
+        
+        self._frame_times.append(dt)
+        if len(self._frame_times) > self._max_samples:
+            self._frame_times.pop(0)
+    
+    def get_fps(self) -> float:
+        """Obtener FPS promedio."""
+        if not self._frame_times:
+            return 0.0
+        avg_dt = sum(self._frame_times) / len(self._frame_times)
+        return 1.0 / avg_dt if avg_dt > 0 else 0.0
 
 @dataclass(slots=True)
 class GameWindow:
